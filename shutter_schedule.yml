@@ -1,0 +1,93 @@
+---
+
+##############
+# rollershutter states:
+#   DOWN: rollershutter is closed and will not open no matter if the sun shines or not
+#   UP:   rollershutter is open and will not close no matter if the sun shines or not
+#   SUN:  rollershutter is open unless they are exposed to sun shine. (weather dependant)
+#   MANUAL:  rollershutter is in manual mode
+
+##############
+# calendar: dertermine the desired state of the shutters based on a calendar (first match if multiple entries match)
+# cron: "DoyOfMonth Month Weekday Year" # dates only no time
+# timerange: from-To including from date, excluding to date, format: YYYY.MM.DD-YYYY-MM-DD
+
+calendar:
+  - desc: "Sommerferien"
+    timerange: {from: "12.06.2017", to: "15.06.2017" }
+    daily_schedule: vacation
+  - desc: "Weekend"
+    cron: "? * 7,1 *"
+    daily_schedule: weekend
+  - desc: "Workdays"
+    cron: "? * 2-6 *"
+    daily_schedule: workday
+
+##############
+# daily schedules that may be referenced in the calendar
+daily_schedules:
+  weekend:
+    - open_weekend
+    - kids_evening
+    - close_dusk
+  workday:
+    - open_workday
+    - kids_open
+    - kids_evening
+    - close_dusk
+  vacation:
+    - open_workday
+    - kids_open
+    - close_dusk
+
+##############
+# rules: event and action to be performed
+#cron: 'SS MM HH' # within a single day -> no date
+rules:
+  open_weekend:
+    desc: "Open all on weekends"
+    triggers:
+      - cron: '0 0 9'
+    action: SUN
+    items:
+      - shutter_kitchen
+      - shutter_office
+      - shutter_living
+      - shutter_kids
+      - shutter_bedroom
+  open_workday:
+    desc: "Open all on workdays"
+    triggers:
+      - cron: '0 0 7'
+    action: SUN
+    items:
+      - shutter_kitchen
+      - shutter_office
+      - shutter_living
+      - shutter_bedroom
+  kids_evening:
+    desc: "Kids: close manually when kids are ready and don't open after sunset when kids already asleep"
+    triggers:
+      - cron: '0 30 19'
+    action: MANUAL
+    items:
+      - shutter_kids
+  kids_open:
+    desc: "Kids: open in the morning"
+    triggers:
+      - cron: '0 0 8'
+    action: SUN
+    items:
+      - shutter_kids
+  close_dusk:
+    desc: "dusk: shut shutters after nightfall or at 22:00"
+    triggers:
+      - channel_event: {channel: 'astro:sun:local:nauticDusk#event', event: 'START'}
+      - cron: '0 0 22'
+    action: DOWN
+    items:
+      - shutter_kitchen
+      - shutter_office
+      - shutter_living
+      - shutter_kids
+      - shutter_bedroom
