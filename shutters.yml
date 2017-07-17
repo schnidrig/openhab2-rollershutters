@@ -1,5 +1,8 @@
 ---
 
+# Copyright (c) 2017 by Christian Schnidrig.
+
+
 ########################
 items:
   azimuth: astro_sun_azimuth

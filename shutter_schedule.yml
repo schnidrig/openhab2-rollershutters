@@ -1,5 +1,7 @@
 ---
 
+# Copyright (c) 2017 by Christian Schnidrig.
+
 ##############
 # rollershutter states:
 #   DOWN: rollershutter is closed and will not open no matter if the sun shines or not

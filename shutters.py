@@ -1,3 +1,6 @@
+
+# Copyright (c) 2017 by Christian Schnidrig.
+
 # jython imports
 import logging
 import uuid
