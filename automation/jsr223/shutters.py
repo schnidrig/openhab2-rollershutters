@@ -9,7 +9,7 @@ import sys
 import traceback
 import time
 from threading import Thread
-
+ 
 # java imports
 from org.eclipse.smarthome.core.scheduler import CronExpression
 from java.util import Date, Locale
@@ -48,7 +48,7 @@ sunlitStateTrue = "True"
 sunlitStateFalse = "False"
 
 # location of script
-automationDir = '/etc/openhab2/automation/jsr223'
+automationDir = '/etc/openhab2/automation'
 
 shuttersFileName = 'shutters.yml'
 scheduleFileName = 'shutter_schedule.yml'
@@ -60,7 +60,7 @@ scheduleFile = automationDir + '/' + scheduleFileName
 config = None
 calendar = None
 
-# defaut logger
+# default logger
 logger = logging.getLogger(module_name)
 
 # globalRules
@@ -98,13 +98,12 @@ class Config():
 #######################################################
 def initStateItems(force=False, states=None):
     logger = logging.getLogger(module_name + ":initStateItems")
+    logger.info("Initializing")
     if states == None:
         states = {prefix_auto: autoStateDown, prefix_sunlit: sunlitStateFalse}
     for item_name in config.getShutters():
-        #logger.info(ir.get(item_name))
         for prefix in states:
             item = ir.get(prefix + item_name)
-            logger.debug(item)
             if str(item.getState()) == "NULL" or force:
                 events.postUpdate(item.getName(), states[prefix])
 
@@ -127,39 +126,55 @@ def normalize_name(name, prefix=None):
 
 class CronTrigger(Trigger):
     def __init__(self, cronExpression, triggerName=None):
+        self.logger = logging.getLogger(module_name + ":CronTrigger")
         triggerName = normalize_name(triggerName)
         Trigger.__init__(self, triggerName, "timer.GenericCronTrigger", Configuration({
                 "cronExpression": cronExpression
                 }))
 
-class ChannelEventCondition(Condition):
-    def __init__(self, triggerName, event, conditionName=None):
-        conditionName = normalize_name(conditionName)
-        triggerName = normalize_name(triggerName)
-        logger.info("Condition: " + conditionName + "; Trigger: " + triggerName)
-        Condition.__init__(self, conditionName, "core.GenericEventCondition", Configuration({
-            "payload": event
-        }), {
-            "event": triggerName+".event"
-            })
+#===============================================================================
+# class ChannelEventCondition(Condition):
+#     def __init__(self, triggerName, event, conditionName=None):
+#         self.logger = logging.getLogger(module_name + ":ChannelEventCondition")
+#         conditionName = normalize_name(conditionName)
+#         triggerName = normalize_name(triggerName)
+#         self.logger.info("Condition: " + conditionName + "; Trigger: " + triggerName)
+#         Condition.__init__(self, conditionName, "core.GenericEventCondition", Configuration({
+#             "payload": event
+#         }), {
+#             "event": triggerName+".event"
+#             })
+# 
+# class ChannelEventTrigger(Trigger):
+#     def __init__(self, channelUID, triggerName=None):
+#         self.logger = logging.getLogger(module_name + ":ChannelEventTrigger")
+#         triggerName = normalize_name(triggerName)
+#         self.logger.info("Trigger: " + triggerName + "; channel: " + channelUID)
+#         Trigger.__init__(self, triggerName, "core.GenericEventTrigger", Configuration({
+#                 "eventTopic": "smarthome/channels/*/triggered",
+#                 "eventSource": channelUID,
+#                 "eventTypes": "ChannelTriggeredEvent"
+#                 }))
+#===============================================================================
 
 class ChannelEventTrigger(Trigger):
-    def __init__(self, channelUID, triggerName=None):
+    def __init__(self, channelUID, event, triggerName=None):
+        self.logger = logging.getLogger(module_name + ":ChannelEventTrigger")
         triggerName = normalize_name(triggerName)
-        logger.info("Trigger: " + triggerName + "; channel: " + channelUID)
-        Trigger.__init__(self, triggerName, "core.GenericEventTrigger", Configuration({
-                "eventTopic": "smarthome/channels/*/triggered",
-                "eventSource": channelUID,
-                "eventTypes": "ChannelTriggeredEvent"
-                }))
+        self.logger.debug("Trigger: " + triggerName + "; channel: " + channelUID)
+        config = { "channelUID": channelUID }
+        config["event"] = event
+        Trigger.__init__(self, triggerName, "core.ChannelEventTrigger", Configuration(config))
 
 class StartupTrigger(Trigger):
     def __init__(self, triggerName=None):
+        self.logger = logging.getLogger(module_name + ":StartupTrigger")
         triggerName = normalize_name(triggerName)
         Trigger.__init__(self, triggerName, STARTUP_MODULE_ID, Configuration())
 
 class ItemStateChangeTrigger(Trigger):
     def __init__(self, itemName, state=None, triggerName=None):
+        self.logger = logging.getLogger(module_name + ":ItemStateChangeTrigger")
         triggerName = normalize_name(triggerName)
         config = { "itemName": itemName }
         if state is not None:
@@ -385,7 +400,6 @@ class ShutterTest():
 #######################################################
 # Rules
 
-
 class ShutterBaseRule(SimpleRule):
     def __init__(self, shutterAutomationItem, testing=False):
         self.testing = testing
@@ -452,6 +466,8 @@ class SunExposureRule(ShutterBaseRule):
 
 
 def setupSunExposureRule(exposureConfig, items):
+    logger = logging.getLogger(module_name + ":setupSunExposureRule")
+    logger.info("creating rule")
     exposure = {}
     for shutter in exposureConfig:
         exposure[shutter] = SunExposure(exposureConfig[shutter])
@@ -482,11 +498,12 @@ class ShutterScheduleRule(ShutterBaseRule):
         name = self.ruleName + "-" + channelUID + "-" + event
         triggerName = name + "_trigger"
         conditionName = name + "_condition"
-        self.triggerList.append(ChannelEventTrigger(channelUID, triggerName))
-        self.conditionList.append(ChannelEventCondition(triggerName, event, conditionName))
+        self.triggerList.append(ChannelEventTrigger(channelUID, event, triggerName))
+        #self.triggerList.append(ChannelEventTrigger(channelUID, triggerName))
+        #self.conditionList.append(ChannelEventCondition(triggerName, event, conditionName))
         self.setTriggers(self.triggerList)
-        self.setConditions(self.conditionList)
-
+        #self.setConditions(self.conditionList)
+ 
     def _execute(self, auto):
         for shutterName in self.items:
             autoState = ir.get(prefix_auto + shutterName).getState().toString()
@@ -510,8 +527,6 @@ class ShutterScheduleRule(ShutterBaseRule):
         auto = self.shutterAutomationItem.getState().toString() == "ON"
         self._execute(auto)
 
-
-
 #######################################################
 # tests
 class RulesTest():
@@ -520,7 +535,7 @@ class RulesTest():
 
     def sunExposureRuleTest(self):
         testExposureConfig = Yaml().load("""
-            switch_rts_wohnzimmer_tuere:
+            shutter_living:
                 orientation: 240
                 sun_openings:
                   - azimuth: 160
@@ -529,14 +544,14 @@ class RulesTest():
         testExposure = {}
         for shutter in testExposureConfig:
             testExposure[shutter] = SunExposure(testExposureConfig[shutter])
-        ser = SunExposureRule(testExposure,  "astro_sun_azimuth", "astro_sun_elevation", "switch_wetter_sonnig", "shutter_automation", True)
+        ser = SunExposureRule(testExposure,  "astro_sun_azimuth", "astro_sun_elevation", "weather_sunny", "shutter_automation", True)
 
         # values for DOWN = 100, STOP = 50, UP = 0
-        shutterName = "switch_rts_wohnzimmer_tuere"
+        shutterName = "shutter_living"
         shutterItem = ir.get(shutterName)
         sunlitStateItem = ir.get(prefix_sunlit + shutterName)
         autoStateItem = ir.get(prefix_auto + shutterName)
-        isSunnyItem = ir.get("switch_wetter_sonnig")
+        isSunnyItem = ir.get("weather_sunny")
 
         events.postUpdate(isSunnyItem.getName(), "OFF")
         events.sendCommand(shutterItem.getName(), "DOWN")
@@ -613,7 +628,7 @@ class RulesTest():
         assert sunlitStateItem.getState().toString() == sunlitStateTrue
 
     def shutterScheduleRuleTest(self):
-        shutterName = "switch_rts_wohnzimmer_tuere"
+        shutterName = "shutter_living"
         shutterItem = ir.get(shutterName)
         sunlitStateItem = ir.get(prefix_sunlit + shutterName)
         autoStateItem = ir.get(prefix_auto + shutterName)
@@ -705,35 +720,30 @@ class Rules():
         self.rules = {}
         self.parseRules()
 
-    def getRules(self, ruleName):
+    def getRule(self, ruleName):
         return self.rules[ruleName]
 
     def parseRules(self):
         for rule_name in self.config:
-            self.logger.info("RuleName: " + rule_name)
+            self.logger.info("Parser: found rule: " + rule_name)
             config = self.config[rule_name]
             trigger_configs = config['triggers']
             actionItems = config['items']
             action = config['action']
             triggers = []
-            # due to problem with the trigger wie have to create a rule for each channel_event trigger
-            subList = []
+            rule = ShutterScheduleRule(action,
+                                       actionItems,
+                                       rule_name,
+                                       self.items['shutter_automation']
+                                       );
             for trigger_config in trigger_configs:
-                rule = ShutterScheduleRule(action,
-                                           actionItems,
-                                           rule_name + str(len(subList)),
-                                           self.items['shutter_automation']
-                                           );
-                self.logger.debug("RuleName-generated: " + rule.getUID())
                 self.logger.debug("Trigger_Config: " + str(trigger_config))
                 if trigger_config.get('channel_event') != None:
                     tc = trigger_config.get('channel_event')
                     rule.addChannelEventTrigger(tc['channel'], tc['event'])
                 elif trigger_config.get('cron') != None:
                     rule.addCronTrigger(trigger_config.get('cron'))
-                subList.append(rule)
-            self.rules[rule_name] = subList
-
+            self.rules[rule_name] = rule
 
 class DailySchedules():
     def __init__(self, config, rules):
@@ -744,15 +754,18 @@ class DailySchedules():
         self.parseDailySchedules()
 
     def getSchedules(self, scheduleName):
-        return self.schedules[scheduleName]
+        if scheduleName != None:
+            return self.schedules[scheduleName]
+        else:
+            return {}
 
     def parseDailySchedules(self):
         for scheduleName in self.config:
+            self.logger.info("Parser: found daily schedule: " + scheduleName)
             config = self.config[scheduleName]
             rules = []
             for ruleName in config:
-                for subRule in self.rules.getRules(ruleName):
-                    rules.append(subRule)
+                rules.append(self.rules.getRule(ruleName))
             self.schedules[scheduleName] = rules
 
 class Calendar():
@@ -765,6 +778,7 @@ class Calendar():
         self.scheduleName = None
         now = Date()
         for calendarItem in self.config:
+            self.logger.info("Parser: found calendar item: " + str(calendarItem))
             # check if daily schedule exists:
             try:
                 self.schedules.getSchedules(calendarItem['daily_schedule'])
@@ -773,7 +787,10 @@ class Calendar():
                 raise e
 
             if calendarItem.get('cron') != None:
-                if CronExpression("* * * " + calendarItem.get('cron')).isSatisfiedBy(now):
+                cronExpression = "* * * " + calendarItem.get('cron')
+                self.logger.debug(cronExpression)
+                self.logger.debug(now)
+                if CronExpression(cronExpression).isSatisfiedBy(now):
                     # don't break we want to test the config
                     if self.scheduleName == None:
                         self.scheduleName = calendarItem['daily_schedule']
@@ -791,14 +808,19 @@ class Calendar():
                     if self.scheduleName == None:
                         self.scheduleName = calendarItem['daily_schedule']
 
-        self.logger.info("Daily Schedule: " + str(self.scheduleName))
+        if self.scheduleName == None:
+            self.logger.warn("Todays daily schedule: " + str(self.scheduleName))
+        else:
+            self.logger.info("todays daily schedule: " + str(self.scheduleName))
         return self.scheduleName
 
     def getTodaysRules(self):
         return self.schedules.getSchedules(self.getDailyScheduleName())
 
     def loadTodaysRules(self):
-        for rule in self.getTodaysRules():
+        rules = self.getTodaysRules()
+        self.logger.info("loading todays rules...")
+        for rule in rules:
             automationManager.addRule(rule)
 
 
@@ -810,7 +832,6 @@ class DailyReloadRule(SimpleRule):
     def execute(self, module, input):
         automationManager.removeAll()
         addAllRules()
-
 
 #######################################################
 class CalendarTest():
@@ -855,14 +876,14 @@ class CalendarTest():
                   - cron: '0 30 19'
                 action: MANUAL
                 items:
-                  - switch_rts_kinder_gross
+                  - shutter_living
             kids_open:
                 triggers:
                   - cron: '0 30 20'
                   - channel_event: {channel: 'astro:sun:local:nauticDusk#event', event: 'START'}
                 action: SUN
                 items:
-                  - switch_rts_kinder_gross
+                  - shutter_living
         """), {'shutter_automation': 'shutter_automation'})
         return rules
 
@@ -879,6 +900,28 @@ class CalendarTest():
         self.logger.info("TEST end")
 
 #######################################################
+# tests
+class MiscTest():
+    def __init__(self):
+        self.logger = logging.getLogger(module_name + ":MiscTest")
+
+    # Test for bug in CronExpression
+    def cronTest(self):
+        self.logger.info("cronTest")
+        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.GERMAN)
+        assert CronExpression("* * * ? * SAT,SUN *").isSatisfiedBy(dateFormat.parse("29.07.2017"))
+        assert CronExpression("* * * ? * SAT,SUN *").isSatisfiedBy(dateFormat.parse("30.07.2017"))
+
+    def run(self):
+        self.logger.info("TEST start")
+        try:
+            self.cronTest()
+        except Exception as e:
+            self.logger.error(traceback.format_exc())
+  
+        self.logger.info("TEST end")
+    
+#######################################################
 #######################################################
 #######################################################
 #fileWatcher
@@ -889,7 +932,7 @@ configFileWatcherKey = automationDirPath.register(configFileWatcher, StandardWat
 
 def fileWatcher():
     logger = logging.getLogger(module_name + ":fileWatcher")
-    logger.info("Start Watching")
+    logger.info("Start watching config files")
     try:
         while True:
             key = configFileWatcher.take()
@@ -908,7 +951,6 @@ def fileWatcher():
 #http://www.jython.org/jythonbook/en/1.0/Concurrency.html
 fileWatcherThread = Thread(target=lambda: fileWatcher())
 
-
 #######################################################
 #######################################################
 #######################################################
@@ -920,11 +962,12 @@ def addAllRules():
     calendar.loadTodaysRules()
 
 def runTests():
-        #ShutterTest().run()
-        #RulesTest().run()
-        #CalendarTest().run()
+        MiscTest().run()
+        ShutterTest().run()
+        RulesTest().run()
+        CalendarTest().run()
         pass
-
+ 
 def load():
     global config
     global calendar
@@ -948,7 +991,6 @@ def restart():
     automationManager.removeAll()
     load()
 
-
 #######################################################
 # script load/unload hooks
 
@@ -960,10 +1002,9 @@ def scriptLoaded(id):
         fileWatcherThread.start()
 
         # during development, delete in production
-        #events.postUpdate("switch_wetter_sonnig", "ON")
-        #events.postUpdate("shutter_automation", "ON")
-        #initStateItems(True, {prefix_auto: autoStateDown, prefix_sunlit: sunlitStateFalse})
-
+        events.postUpdate("weather_sunny", "ON")
+        events.postUpdate("shutter_automation", "ON")
+        initStateItems(True, {prefix_auto: autoStateSun, prefix_sunlit: sunlitStateFalse})
 
     except Exception as e:
         logger.error(traceback.format_exc())

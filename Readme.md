@@ -1,25 +1,31 @@
 # Rollershutter Automation Script
 
 This is a script written for Openhab2. It is written in Jython and depends on the new jsr223 scripting feature. See [jsr223](http://docs.openhab.org/configuration/jsr223.html) for more information.
+You need at least openhab 2.2.0 dated 20170729 or newer.
 
 ## Features
 
-- calendar specifying which daily schedule to run on which day.
-- daily schedules like "workday" "weekend" "vaction" defining which rules are to be run a each type of day
-- rules defining when to run what action on which items
-- shading logic: for each window calculate when it is sunlit based on astro binding info and a shading model for each window.
-- take into account weather binding info or sun sensor
+- calendar: specifies the daily schedule that is to be run on a particular day.
+- daily schedule: e.g. "workday" "weekend" "vacation". It defines the rules that are to be run a particular type of day.
+- rule: defines the time/trigger and action to be run on which rollershutter.
+- shading logic: create a shading model for each rollershutter and then have the script calculate if it is currently sunlit or not. (using the astro binding). Autoclose the rollershutter when window is sunlit.
+- weather / sun sensor awareness: include info from weather binding and / or a sun sensor
 - master automation ON/OFF switch
 - entirely configured through yaml
 
+## Known Bugs
+
+- The script depends on: `org.eclipse.smarthome.core.scheduler.CronExpression` which still has bugs. E.g. `30.07.2017` does not match `* * * ? * SAT,SUN *`.
+- The script is still relatively new and needs more testing. -> Use at your own risk ;-)
 
 ## Config
 
-The examples are not from an actual running config. There may very well be inconsistencies.
+The examples are not from an actual running config. There may very well be errors or inconsistencies.
+If you replace your config file with this repo you should get a working demo site.
 
 ### Calendar
 
-The calendar defines which daily schedule should run on what day. E.g. you may define daily schedules like workday, weekend and vacation:
+The calendar specifies the daily schedule that is to be run on a particular day. E.g. you may define daily schedules like workday, weekend and vacation:
 
     calendar:
       - desc: "Summer Vacation"
@@ -32,7 +38,8 @@ The calendar defines which daily schedule should run on what day. E.g. you may d
         cron: "? * 2-6 *"
         daily_schedule: workday
 
-It is possible to use timeranges or cron expressions ( without seconds, minutes, hours ) syntax from org.eclipse.smarthome.core.scheduler.CronExpression. (compatible with [Quarz](https://quartz-scheduler.org/), see [CronExpression](http://www.quartz-scheduler.org/api/2.2.1/org/quartz/CronExpression.html) )
+It is possible to use time ranges or cron expressions ( without seconds, minutes, hours ). The cron expressions use the syntax from org.eclipse.smarthome.core.scheduler.CronExpression. (compatible with [Quarz](https://quartz-scheduler.org/), see [CronExpression](http://www.quartz-scheduler.org/api/2.2.1/org/quartz/CronExpression.html) )
+
 The first match wins.
 
 ### Daily Schedules
@@ -107,7 +114,7 @@ Rules define triggers after which a set of rollershutters should be put into a s
           - shutter_kids
           - shutter_bedroom
 
-#### actions / rollershutter states
+#### Actions / Rollershutter States
 
 
 State | Description
@@ -119,7 +126,7 @@ MANUAL|rollershutter is in manual mode
 
 ### Items
 
-A set of Items that have to exist and are used by the rollershutter script.
+A set of Openhab2-items that have to exist and are used by the rollershutter script (they are defined in your `<config_dir>/items/*.items` files.)
 
     items:
       azimuth: astro_sun_azimuth
@@ -138,7 +145,7 @@ A set of Items that have to exist and are used by the rollershutter script.
 
 ### Sun Exposure
 
-This allows for the definition of when a window is sunlit and should be closed (provided the sun is shining)
+This allows for modeling the window shading.
 
     sun_exposure:
       shutter_living:
@@ -192,13 +199,15 @@ This allows for the definition of when a window is sunlit and should be closed (
 
 ## Installation
 
- - Make sure you have enabled the new rules support and installed the jython library for jsr223 support. (put jython-standalone-2.7.0.jar from http://www.jython.org/downloads.html into the boot folder: /usr/share/openhab2/runtime/lib/boot/)
- - Download http://central.maven.org/maven2/org/yaml/snakeyaml/1.18/snakeyaml-1.18.jar and install it in the addons folder: /usr/share/openhab2/addons.
+ - You need openhab 2.2.0 dated 20170729 or newer.
+ - Make sure you have the new rules support enabled.
+ - Install the jython library: Download [jython-standalone-2.7.0.jar](http://www.jython.org/downloads.html) and install it in the boot folder: `/usr/share/openhab2/runtime/lib/boot/`
+ - Download [snakeyaml-1.18.jar](http://central.maven.org/maven2/org/yaml/snakeyaml/1.18/snakeyaml-1.18.jar) and install it in the addons folder: `/usr/share/openhab2/addons`.
 
- - Install the contents of this repo in the automation folder: /etc/openhab2/automation/jsr223/
- - Edit shutter_schedule.yml and shutters.yml according to your needs.
+ - Install the contents of the automation folder in this repo in your automation folder: `/etc/openhab2/automation`. Note: You don't need `000_log.py` if you already have some jython to openhab log bridge installed.
+ - Edit `shutter_schedule.yml` and `shutters.yml` according to your needs.
 
- - In case your installation paths differ, change the corresponding paths in shutter.py
+ - In case your installation paths differ, change the corresponding paths in `shutter.py:automationDir`
 
  - Create state items. You need two for each shutter. e.g. if you hava a shutter called `shutter_kitchen` define two additional Strings with the prefixes `state_auto_` and `state_sunlit_`. Make them persistent.
 
@@ -207,4 +216,4 @@ This allows for the definition of when a window is sunlit and should be closed (
     String state_sunlit_shutter_kitchen   "RTS Kitchen SUNLIT"  (mysql)
 
 
-## Enjoy ;-)
+

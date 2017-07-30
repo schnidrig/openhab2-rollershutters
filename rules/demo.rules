@@ -1,0 +1,13 @@
+rule "weather condition changes"
+when
+    Item weather_condition changed
+then
+    logInfo("Shutter_automation", "{}", weather_condition)
+    switch weather_condition.state {
+        case "sunny",
+        case "hot",
+        case "partly-cloudy-day",
+        case "unknown": {logInfo("Shutter_automation", "it is sunny"); postUpdate(weather_sunny, ON) }
+        default: {logInfo("Shutter_automation", "it is cloudy"); postUpdate(weather_sunny, OFF) }
+    }
+end

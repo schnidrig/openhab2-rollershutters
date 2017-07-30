@@ -1,0 +1,4 @@
+
+astro:sun:local [ geolocation="46.000,8.8000", altitude=600, interval=30 ]
+
+

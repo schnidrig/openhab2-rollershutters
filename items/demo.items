@@ -1,0 +1,40 @@
+
+// Groups
+Group shutters                   "Rollershutters"              
+Group automation                 "Automation State"
+Group astro                      "Astro"
+// all items in the mysql group should be persistent
+Group mysql                      "Database"  
+            
+
+// Weather
+String   weather_condition                                     (mysql)                        {weather="locationId=democity, type=condition, property=commonId"}
+Switch   weather_sunny           "Sun is shining"              (automation, mysql)
+
+// Astro
+Number astro_sun_elevation       "Elevation [%.0f]"            (astro)                         { channel="astro:sun:local:position#elevation" }
+Number astro_sun_azimuth         "Azimuth [%.0f]"              (astro)                         { channel="astro:sun:local:position#azimuth" }
+
+// Automation
+Switch shutter_automation        "Shutter automation ON/OFF"   (automation, mysql)
+
+// Shutters
+Rollershutter shutter_kitchen    (shutters, mysql)                      // { channel="rfxcom:rfy:0001:thing_rts_kitchen:shutter" }
+Rollershutter shutter_office     (shutters, mysql)                      // { channel="rfxcom:rfy:0001:thing_rts_office:shutter" }
+Rollershutter shutter_living     (shutters, mysql)                      // { channel="rfxcom:rfy:0001:thing_rts_living:shutter" }
+Rollershutter shutter_kids       (shutters, mysql)                      // { channel="rfxcom:rfy:0001:thing_rts_kids:shutter" }
+Rollershutter shutter_bedroom    (shutters, mysql)                      // { channel="rfxcom:rfy:0001:thing_rts_bedroom:shutter" }
+
+
+// State Items
+String state_auto_shutter_kitchen     (automation, mysql)
+String state_auto_shutter_office      (automation, mysql)
+String state_auto_shutter_living      (automation, mysql)
+String state_auto_shutter_kids        (automation, mysql)
+String state_auto_shutter_bedroom     (automation, mysql)
+
+String state_sunlit_shutter_kitchen   (automation, mysql)
+String state_sunlit_shutter_office    (automation, mysql)
+String state_sunlit_shutter_living    (automation, mysql)
+String state_sunlit_shutter_kids      (automation, mysql)
+String state_sunlit_shutter_bedroom   (automation, mysql)

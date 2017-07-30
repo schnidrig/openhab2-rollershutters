@@ -19,10 +19,10 @@ calendar:
     timerange: {from: "12.06.2017", to: "15.06.2017" }
     daily_schedule: vacation
   - desc: "Weekend"
-    cron: "? * 7,1 *"
+    cron: "? * SAT,SUN *"
     daily_schedule: weekend
   - desc: "Workdays"
-    cron: "? * 2-6 *"
+    cron: "? * MON-FRI *"
     daily_schedule: workday
 
 ##############

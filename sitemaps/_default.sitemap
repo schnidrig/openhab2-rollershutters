@@ -1,0 +1,6 @@
+sitemap _default label="Demo" {
+    Frame label="Groups" {
+        Group item=shutters
+        Group item=automation
+    }
+}

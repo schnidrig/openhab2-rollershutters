@@ -12,7 +12,7 @@ items:
 
 ########################
 # SUN exposure
-
+ 
 sun_exposure:
   shutter_living:
     orientation: 240
