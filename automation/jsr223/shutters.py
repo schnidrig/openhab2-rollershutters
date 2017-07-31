@@ -1005,9 +1005,9 @@ def scriptLoaded(id):
         fileWatcherThread.start()
 
         # during development, delete in production
-        events.postUpdate("weather_sunny", "ON")
-        events.postUpdate("shutter_automation", "ON")
-        initStateItems(True, {prefix_auto: autoStateSun, prefix_sunlit: sunlitStateFalse})
+        #events.postUpdate("weather_sunny", "ON")
+        #events.postUpdate("shutter_automation", "ON")
+        #initStateItems(True, {prefix_auto: autoStateSun, prefix_sunlit: sunlitStateFalse})
 
     except Exception as e:
         logger.error(traceback.format_exc())
