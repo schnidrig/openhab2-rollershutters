@@ -27,14 +27,14 @@ Rollershutter shutter_bedroom    (shutters, mysql)                      // { cha
 
 
 // State Items
-String state_auto_shutter_kitchen     (automation, mysql)
-String state_auto_shutter_office      (automation, mysql)
-String state_auto_shutter_living      (automation, mysql)
-String state_auto_shutter_kids        (automation, mysql)
-String state_auto_shutter_bedroom     (automation, mysql)
+String state_auto_shutter_kitchen     "RTS Kitchen [%s]"     (automation, mysql)
+String state_auto_shutter_office      "RTS Office [%s]"      (automation, mysql)
+String state_auto_shutter_living      "RTS Living Room [%s]" (automation, mysql)
+String state_auto_shutter_kids        "RTS Kids [%s]"        (automation, mysql)
+String state_auto_shutter_bedroom     "RTS Bedroom [%s]"     (automation, mysql)
 
-String state_sunlit_shutter_kitchen   (automation, mysql)
-String state_sunlit_shutter_office    (automation, mysql)
-String state_sunlit_shutter_living    (automation, mysql)
-String state_sunlit_shutter_kids      (automation, mysql)
-String state_sunlit_shutter_bedroom   (automation, mysql)
+String state_sunlit_shutter_kitchen   "RTS Kitchen [%s]"     (automation, mysql)
+String state_sunlit_shutter_office    "RTS Office [%s]"      (automation, mysql)
+String state_sunlit_shutter_living    "RTS Living Room [%s]" (automation, mysql)
+String state_sunlit_shutter_kids      "RTS Kids [%s]"        (automation, mysql)
+String state_sunlit_shutter_bedroom   "RTS Bedroom [%s]"     (automation, mysql)

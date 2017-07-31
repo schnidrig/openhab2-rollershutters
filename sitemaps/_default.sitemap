@@ -1,6 +1,21 @@
 sitemap _default label="Demo" {
-    Frame label="Groups" {
+    Frame label="Misc" {
+        Switch item=shutter_automation
+        Switch item=weather_sunny 
         Group item=shutters
-        Group item=automation
+    }
+    Frame label="Rollershutters AUTO"  {
+        Selection icon=settings item=state_auto_shutter_kitchen mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]
+        Selection icon=settings item=state_auto_shutter_office mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]
+        Selection icon=settings item=state_auto_shutter_living mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]
+        Selection icon=settings item=state_auto_shutter_kids mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]
+        Selection icon=settings item=state_auto_shutter_bedroom mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]
+    }
+    Frame label="Rollershutters SUNLIT"  {
+        Text item=state_sunlit_shutter_kitchen
+        Text item=state_sunlit_shutter_office
+        Text item=state_sunlit_shutter_living
+        Text item=state_sunlit_shutter_kids
+        Text item=state_sunlit_shutter_bedroom
     }
 }
