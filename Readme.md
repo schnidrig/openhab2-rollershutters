@@ -136,9 +136,10 @@ A set of Openhab2-items that have to exist and are used by the rollershutter scr
 
 - `azimuth` & `elevation`: Items linked to the Astro binding e.g. defined as:
 
-
+''''
     Number astro_sun_elevation  "Elevation [%.0f]" { channel="astro:sun:local:position#elevation" }
     Number astro_sun_azimuth    "Azimuth [%.0f]"   { channel="astro:sun:local:position#azimuth" }
+''''
 
 - `weather_sunny`: Switch item which is ON when the sun is shining. Could be from a weather binding or a sensor.
 
@@ -213,10 +214,10 @@ This allows for modeling the window shading.
 
  - Create state items. You need two for each shutter. e.g. if you hava a shutter called `shutter_kitchen` define two additional Strings with the prefixes `state_auto_` and `state_sunlit_`. Make them persistent.
 
-
+''''
     Rollershutter shutter_kitchen         "RTS Kitchen"         (mysql)  { channel="rfxcom:rfy:0001:thing_rts_kitchen:shutter" }
     String state_auto_shutter_kitchen     "RTS Kitchen AUTO"    (mysql)
     String state_sunlit_shutter_kitchen   "RTS Kitchen SUNLIT"  (mysql)
-
+''''
 
 
