@@ -406,7 +406,9 @@ class ShutterTest():
 class ShutterBaseRule(SimpleRule):
     def __init__(self, shutterAutomationItem, testing=False):
         self.testing = testing
-        self.shutterAutomationItem = ir.get(shutterAutomationItem)
+        if ir.get(shutterAutomationItem) == None:
+            self.logger.error("Item: " + shutterAutomationItem + " not found.")
+        self.shutterAutomationItem = shutterAutomationItem
 
     def sendCommand(self, shutterName, state, auto):
         if not auto:
@@ -424,15 +426,19 @@ class ShutterBaseRule(SimpleRule):
 class SunExposureRule(ShutterBaseRule):
     def __init__(self, exposure, azimuthItem, elevationItem, isSunnyItem, shutterAutomationItem, testing=False):
         #super(ShutterBaseRule, self).__init__(shutterAutomationItem, testing)
-        ShutterBaseRule.__init__(self, shutterAutomationItem, testing)
         self.logger = logging.getLogger(logger_name + ".SunExposureRule")
+        ShutterBaseRule.__init__(self, shutterAutomationItem, testing)
         self.exposure = exposure
-        self.elevationItem = ir.get(elevationItem)
-        self.isSunnyItem = ir.get(isSunnyItem)
+        if ir.get(elevationItem) == None:
+            self.logger.error("Item: " + elevationItem + " not found.")
+        self.elevationItem = elevationItem
+        if ir.get(isSunnyItem) == None:
+            self.logger.error("Item: " + isSunnyItem + " not found.")
+        self.isSunnyItem = isSunnyItem
         self.setTriggers([ItemStateChangeTrigger(azimuthItem)])
 
     def _execute(self, azimuth, elevation, auto):
-        isSunny = self.isSunnyItem.getState().toString() == "ON"
+        isSunny = ir.get(self.isSunnyItem).getState().toString() == "ON"
         self.logger.info("azimuth: " + str(azimuth) + "; elevation: " + str(elevation) + "; isSunny: " + str(isSunny))
 
         for shutterName in self.exposure:
@@ -463,8 +469,9 @@ class SunExposureRule(ShutterBaseRule):
     def execute(self, module, input):
         self.logger.debug("Executing Exposure Rule: ")
         azimuth = float(str(input['newState']))
-        elevation = float(self.elevationItem.getState().toString())
-        auto = self.shutterAutomationItem.getState().toString() == "ON"
+        elevation = float(ir.get(self.elevationItem).getState().toString())
+        auto = ir.get(self.shutterAutomationItem).getState().toString() == "ON"
+        self.logger.debug("shutter_automation is: " + str(auto))
         self._execute(azimuth, elevation, auto)
 
 
@@ -527,7 +534,8 @@ class ShutterScheduleRule(ShutterBaseRule):
 
     def execute(self, module, input):
         self.logger.info("Executing Rule: " + self.ruleName + "; action: " + self.action + "; items: " + str(self.items))
-        auto = self.shutterAutomationItem.getState().toString() == "ON"
+        auto = ir.get(self.shutterAutomationItem).getState().toString() == "ON"
+        self.logger.debug("shutter_automation is: " + str(auto))
         self._execute(auto)
 
 #######################################################
@@ -945,7 +953,11 @@ def fileWatcher():
                 logger.debug(filename)
                 if str(filename) == shuttersFileName or str(filename) == scheduleFileName:
                     logger.info("File " + str(filename) + " changed. Reloading config")
-                    restart()
+                    try:
+                        restart()
+                    except Exception as e:
+                        logger.error("Failed reloading rules.")
+                        logger.error(traceback.format_exc())
             key.reset()
     except InterruptedException:
         logger.info("Stop Watching")
@@ -999,10 +1011,10 @@ def restart():
 
 def scriptLoaded(id):
     try:
+        fileWatcherThread.start()
         #runTests()
 
         load()
-        fileWatcherThread.start()
 
         # during development, delete in production
         #events.postUpdate("weather_sunny", "ON")
@@ -1015,3 +1027,5 @@ def scriptLoaded(id):
 def scriptUnloaded():
     fileWatcherThread.interrupt()
     configFileWatcherKey.cancel()
+
+
