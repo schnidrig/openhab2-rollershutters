@@ -436,6 +436,8 @@ class SunExposureRule(ShutterBaseRule):
             self.logger.error("Item: " + isSunnyItem + " not found.")
         self.isSunnyItem = isSunnyItem
         self.setTriggers([ItemStateChangeTrigger(azimuthItem)])
+        self.setName(module_name + ":SunExposureRule")
+        self.setDescription("Calculates if a rollershutter is exposed to sunlight.")
 
     def _execute(self, azimuth, elevation, auto):
         isSunny = ir.get(self.isSunnyItem).getState().toString() == "ON"
@@ -488,7 +490,7 @@ def setupSunExposureRule(exposureConfig, items):
 # Shutter Rule
 
 class ShutterScheduleRule(ShutterBaseRule):
-    def __init__(self, action, items, ruleName, shutterAutomationItem, testing=False):
+    def __init__(self, action, items, ruleName, shutterAutomationItem, description = "", testing=False):
         ShutterBaseRule.__init__(self, shutterAutomationItem, testing)
         self.logger = logging.getLogger(logger_name + ".ShutterScheduleRule")
         self.action = action
@@ -497,6 +499,8 @@ class ShutterScheduleRule(ShutterBaseRule):
         self.conditionList = []
         self.ruleName = normalize_name(ruleName, "")
         self.prefixedRuleName = normalize_name(self.ruleName)
+        self.setName(module_name + ":ShutterScheduleRule:" + ruleName)
+        self.setDescription(description)
 
     def addCronTrigger(self, schedule):
         name = self.ruleName + "-cron:" + str(schedule).replace("*", "s").replace("?", "q").replace(" ", "l").replace("/", "x")
@@ -511,7 +515,7 @@ class ShutterScheduleRule(ShutterBaseRule):
         self.triggerList.append(ChannelEventTrigger(channelUID, event, triggerName))
         #self.triggerList.append(ChannelEventTrigger(channelUID, triggerName))
         #self.conditionList.append(ChannelEventCondition(triggerName, event, conditionName))
-        self.setTriggers(self.triggerList)
+        self.setTriggers(self.triggerList) 
         #self.setConditions(self.conditionList)
  
     def _execute(self, auto):
@@ -644,10 +648,10 @@ class RulesTest():
         sunlitStateItem = ir.get(prefix_sunlit + shutterName)
         autoStateItem = ir.get(prefix_auto + shutterName)
 
-        ssrU = ShutterScheduleRule(autoStateUp, [shutterName], "testRule", "shutter_automation", True)
-        ssrD = ShutterScheduleRule(autoStateDown, [shutterName], "testRule", "shutter_automation", True)
-        ssrM = ShutterScheduleRule(autoStateManual, [shutterName], "testRule", "shutter_automation", True)
-        ssrS = ShutterScheduleRule(autoStateSun, [shutterName], "testRule", "shutter_automation", True)
+        ssrU = ShutterScheduleRule(autoStateUp, [shutterName], "testRule", "shutter_automation", "", True)
+        ssrD = ShutterScheduleRule(autoStateDown, [shutterName], "testRule", "shutter_automation", "", True)
+        ssrM = ShutterScheduleRule(autoStateManual, [shutterName], "testRule", "shutter_automation", "", True)
+        ssrS = ShutterScheduleRule(autoStateSun, [shutterName], "testRule", "shutter_automation", "", True)
 
         events.sendCommand(shutterItem.getName(), "DOWN")
         events.postUpdate(sunlitStateItem.getName(), sunlitStateFalse)
@@ -745,7 +749,8 @@ class Rules():
             rule = ShutterScheduleRule(action,
                                        actionItems,
                                        rule_name,
-                                       self.items['shutter_automation']
+                                       self.items['shutter_automation'],
+                                       config['desc']
                                        );
             for trigger_config in trigger_configs:
                 self.logger.debug("Trigger_Config: " + str(trigger_config))
@@ -839,6 +844,9 @@ class Calendar():
 class DailyReloadRule(SimpleRule):
     def __init__(self):
         self.triggers = [CronTrigger("0 10 0 ? * * *", "reloadAtMidnight")]
+        self.setName(module_name + ":DailyReloadRule")
+        self.setDescription("Determines each day, which daily schedule to run.")
+
 
     def execute(self, module, input):
         automationManager.removeAll()
