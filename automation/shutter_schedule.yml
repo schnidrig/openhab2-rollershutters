@@ -78,6 +78,8 @@ rules:
     desc: "Kids: open in the morning"
     triggers:
       - cron: '0 0 8'
+    conditions:
+      - item_state: {item_name: 'condition_item', operator: '=', state: 'ON'}
     action: SUN
     items:
       - shutter_kids

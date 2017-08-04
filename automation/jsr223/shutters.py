@@ -134,31 +134,19 @@ class CronTrigger(Trigger):
         Trigger.__init__(self, triggerName, "timer.GenericCronTrigger", Configuration({
                 "cronExpression": cronExpression
                 }))
+        self.setLabel(triggerName)
 
-#===============================================================================
-# class ChannelEventCondition(Condition):
-#     def __init__(self, triggerName, event, conditionName=None):
-#         self.logger = logging.getLogger(logger_name + ".ChannelEventCondition")
-#         conditionName = normalize_name(conditionName)
-#         triggerName = normalize_name(triggerName)
-#         self.logger.info("Condition: " + conditionName + "; Trigger: " + triggerName)
-#         Condition.__init__(self, conditionName, "core.GenericEventCondition", Configuration({
-#             "payload": event
-#         }), {
-#             "event": triggerName+".event"
-#             })
-# 
-# class ChannelEventTrigger(Trigger):
-#     def __init__(self, channelUID, triggerName=None):
-#         self.logger = logging.getLogger(logger_name + ".ChannelEventTrigger")
-#         triggerName = normalize_name(triggerName)
-#         self.logger.info("Trigger: " + triggerName + "; channel: " + channelUID)
-#         Trigger.__init__(self, triggerName, "core.GenericEventTrigger", Configuration({
-#                 "eventTopic": "smarthome/channels/*/triggered",
-#                 "eventSource": channelUID,
-#                 "eventTypes": "ChannelTriggeredEvent"
-#                 }))
-#===============================================================================
+class ItemStateCondition(Condition):
+    def __init__(self, itemName, operator, state, conditionName=None):
+        self.logger = logging.getLogger(logger_name + ".ItemStateCondition")
+        conditionName = normalize_name(conditionName)
+        self.logger.info("Condition: " + conditionName)
+        Condition.__init__(self, conditionName, "core.ItemStateCondition", Configuration({
+            "itemName": itemName,
+            "operator": operator,
+            "state": state
+        }), {})
+        self.setLabel(conditionName)
 
 class ChannelEventTrigger(Trigger):
     def __init__(self, channelUID, event, triggerName=None):
@@ -168,12 +156,14 @@ class ChannelEventTrigger(Trigger):
         config = { "channelUID": channelUID }
         config["event"] = event
         Trigger.__init__(self, triggerName, "core.ChannelEventTrigger", Configuration(config))
+        self.setLabel(triggerName)
 
 class StartupTrigger(Trigger):
     def __init__(self, triggerName=None):
         self.logger = logging.getLogger(logger_name + ".StartupTrigger")
         triggerName = normalize_name(triggerName)
         Trigger.__init__(self, triggerName, STARTUP_MODULE_ID, Configuration())
+        self.setLabel(triggerName)
 
 class ItemStateChangeTrigger(Trigger):
     def __init__(self, itemName, state=None, triggerName=None):
@@ -183,6 +173,7 @@ class ItemStateChangeTrigger(Trigger):
         if state is not None:
             config["state"] = state
         Trigger.__init__(self, triggerName, "core.ItemStateChangeTrigger", Configuration(config))
+        self.setLabel(triggerName)
 
 
 #######################################################
@@ -518,6 +509,11 @@ class ShutterScheduleRule(ShutterBaseRule):
         self.setTriggers(self.triggerList) 
         #self.setConditions(self.conditionList)
  
+    def addItemStateCondition(self, config):
+        conditionName = self.ruleName + "-" + config['item_name'] + "_"  + config['state']
+        self.conditionList.append(ItemStateCondition(config['item_name'], config['operator'], config['state'], conditionName))
+        self.setConditions(self.conditionList)
+
     def _execute(self, auto):
         for shutterName in self.items:
             autoState = ir.get(prefix_auto + shutterName).getState().toString()
@@ -743,6 +739,9 @@ class Rules():
             self.logger.info("Parser: found rule: " + rule_name)
             config = self.config[rule_name]
             trigger_configs = config['triggers']
+            condition_configs = config.get('conditions')
+            if condition_configs == None:
+                condition_configs = []
             actionItems = config['items']
             action = config['action']
             triggers = []
@@ -759,6 +758,10 @@ class Rules():
                     rule.addChannelEventTrigger(tc['channel'], tc['event'])
                 elif trigger_config.get('cron') != None:
                     rule.addCronTrigger(trigger_config.get('cron'))
+            for condition_config in condition_configs:
+                self.logger.info("Condition_Config: " + str(condition_config))
+                if condition_config.get('item_state') != None:
+                    rule.addItemStateCondition(condition_config.get('item_state'))
             self.rules[rule_name] = rule
 
 class DailySchedules():
@@ -1035,5 +1038,4 @@ def scriptLoaded(id):
 def scriptUnloaded():
     fileWatcherThread.interrupt()
     configFileWatcherKey.cancel()
-
 

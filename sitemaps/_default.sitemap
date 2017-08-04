@@ -3,6 +3,7 @@ sitemap _default label="Demo" {
         Switch item=shutter_automation
         Switch item=weather_sunny 
         Group item=shutters
+        Switch item=condition_item 
     }
     Frame label="Rollershutters AUTO"  {
         Selection icon=settings item=state_auto_shutter_kitchen mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]

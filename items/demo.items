@@ -17,6 +17,7 @@ Number astro_sun_azimuth         "Azimuth [%.0f]"              (astro)          
 
 // Automation
 Switch shutter_automation        "Shutter automation ON/OFF"   (automation, mysql)
+Switch condition_item            "Item to test condition"      (automation, mysql)
 
 // Shutters
 Rollershutter shutter_kitchen    (shutters, mysql)                      // { channel="rfxcom:rfy:0001:thing_rts_kitchen:shutter" }
