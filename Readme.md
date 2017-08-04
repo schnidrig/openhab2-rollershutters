@@ -98,6 +98,8 @@ Rules define triggers after which a set of rollershutters should be put into a s
         desc: "Kids: open in the morning"
         triggers:
           - cron: '0 0 8'
+        conditions:
+          - item_state: {item_name: 'condition_item', operator: '=', state: 'ON'}
         action: SUN
         items:
           - shutter_kids

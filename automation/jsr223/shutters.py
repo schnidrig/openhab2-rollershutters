@@ -504,10 +504,7 @@ class ShutterScheduleRule(ShutterBaseRule):
         triggerName = name + "_trigger"
         conditionName = name + "_condition"
         self.triggerList.append(ChannelEventTrigger(channelUID, event, triggerName))
-        #self.triggerList.append(ChannelEventTrigger(channelUID, triggerName))
-        #self.conditionList.append(ChannelEventCondition(triggerName, event, conditionName))
         self.setTriggers(self.triggerList) 
-        #self.setConditions(self.conditionList)
  
     def addItemStateCondition(self, config):
         conditionName = self.ruleName + "-" + config['item_name'] + "_"  + config['state']
@@ -751,17 +748,27 @@ class Rules():
                                        self.items['shutter_automation'],
                                        config['desc']
                                        );
-            for trigger_config in trigger_configs:
-                self.logger.debug("Trigger_Config: " + str(trigger_config))
-                if trigger_config.get('channel_event') != None:
-                    tc = trigger_config.get('channel_event')
-                    rule.addChannelEventTrigger(tc['channel'], tc['event'])
-                elif trigger_config.get('cron') != None:
-                    rule.addCronTrigger(trigger_config.get('cron'))
-            for condition_config in condition_configs:
-                self.logger.info("Condition_Config: " + str(condition_config))
-                if condition_config.get('item_state') != None:
-                    rule.addItemStateCondition(condition_config.get('item_state'))
+            for triggerConfig in trigger_configs:
+                self.logger.debug("Trigger_Config: " + str(triggerConfig))
+                triggerType = triggerConfig.keys()
+                if len(triggerType) > 0:
+                    triggerType = triggerType[0]                 
+                    if triggerType == 'channel_event':
+                        tc = triggerConfig.get('channel_event')
+                        rule.addChannelEventTrigger(tc['channel'], tc['event'])
+                    elif triggerType == 'cron':
+                        rule.addCronTrigger(triggerConfig.get('cron'))
+                    else:
+                        self.logger.error("Unknown trigger type: " + str(triggerType))                    
+            for conditionConfig in condition_configs:
+                self.logger.debug("Condition Config: " + str(conditionConfig))
+                conditionType = conditionConfig.keys()
+                if len(conditionType) > 0:
+                    conditionType = conditionType[0]                   
+                    if conditionType == "item_state":
+                        rule.addItemStateCondition(conditionConfig.get('item_state'))
+                    else:
+                        self.logger.error("Unknown condition type: " + str(conditionType))                    
             self.rules[rule_name] = rule
 
 class DailySchedules():
