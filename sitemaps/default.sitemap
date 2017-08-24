@@ -1,9 +1,11 @@
-sitemap _default label="Demo" {
+sitemap default label="Demo" {
     Frame label="Misc" {
         Switch item=shutter_automation
         Switch item=weather_sunny 
         Group item=shutters
         Switch item=condition_item 
+        #Group item=switches
+        #Group item=sensor
     }
     Frame label="Rollershutters AUTO"  {
         Selection icon=settings item=state_auto_shutter_kitchen mappings=[SUN="sun", DOWN="down", UP="up", MANUAL="manual"]
