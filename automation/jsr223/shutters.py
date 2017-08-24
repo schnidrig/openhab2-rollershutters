@@ -192,6 +192,29 @@ class Horizon():
 
 
 #######################################################
+
+#===============================================================================
+# p = penetration / P = penetration with e = profileAngle 
+# h = height
+# e = elevation
+# a = azimuth
+# PA = profileAngle
+
+# p = cos(e) r 
+# h = sin(e) r
+# h / p = tan(e)
+# p = h / tan(e)
+
+# -------
+# P = h / tan (PA)
+# p = h / tan(e)
+# P = p cos(a) = (h / tan(e) ) cos(a) = h /tan(PA)
+
+# cos(a2) / tan(e2) = 1/tan(PA)
+# PA = atan(tan(e)/cos(a))
+
+#===============================================================================
+
 class HLine():
     def __init__(self, orientation, config):
         self.logger = logging.getLogger(logger_name + ".HLine")
@@ -207,19 +230,19 @@ class HLine():
             math.atan(
                 math.tan( math.radians( elevation ) )
                 /
-                math.sin( math.radians( azimuth - self.orientation + 90 ))
+                math.cos( math.radians( azimuth - self.orientation ))
             )
         )
-
+ 
     def _getElevationAtAzimuth(self, azimuth, profileAngle):
         self.logger.debug( str(azimuth) + ";" + str(profileAngle) )
         return math.degrees(
             math.atan(
-                math.sin( math.radians(azimuth-self.orientation+90) )
+                math.cos( math.radians(azimuth-self.orientation) )
                 *
                 math.tan( math.radians(profileAngle) )
             )
-        )
+        ) 
 
 #######################################################
 class Line(HLine):
@@ -319,7 +342,20 @@ class ShutterTest():
         assert round(t3) == 60
         t4 = hline2.getElevationAtAzimuth(60)
         assert t4 < 0
+        
 
+        # two measurements back and forth
+        hline3 = HLine(150, Yaml().load("{ azimuth: 145, elevation: 62.5 }"))
+        hline4 = HLine(150, Yaml().load("{ azimuth: 198.3, elevation: 52.4 }"))
+
+        t5 = hline3.getElevationAtAzimuth(198.3)
+        t6 = hline4.getElevationAtAzimuth(145)
+        #self.logger.info("t5:" + str(t5))
+        #self.logger.info("t6:" + str(t6))
+        assert round(t5) == 52
+        assert round(t6) == 63
+
+        
     def lineTest(self):
         self.logger.info("lineTest")
         line = Line(240, Yaml().load("""
