@@ -209,7 +209,11 @@ This allows for modeling the window shading.
  - Download [snakeyaml-1.18.jar](http://central.maven.org/maven2/org/yaml/snakeyaml/1.18/snakeyaml-1.18.jar) and install it in the ~~addons~~boot folder: ~~`/usr/share/openhab2/addons`~~`/usr/share/openhab2/runtime/lib/boot/`.
 
  - Install the contents of the automation folder in this repo in your automation folder: `/etc/openhab2/automation`. Note: You don't need `000_log.py` if you already have some jython to openhab log bridge installed.
- - You may want to add `log4j.logger.jython.shutters = INFO` to your logging config.
+ - You may want to add the following lines to your logging config.
+```
+log4j2.logger.jython.name = jython
+log4j2.logger.jython.level = INFO
+```
  - Edit `shutter_schedule.yml` and `shutters.yml` according to your needs.
 
  - In case your installation paths differ, change the paths in `shutter.py` variable: `automationDir`
