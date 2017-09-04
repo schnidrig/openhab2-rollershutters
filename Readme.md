@@ -206,7 +206,7 @@ This allows for modeling the window shading.
  - You need openhab 2.2.0 dated 20170729 or newer.
  - Make sure you have the new rules support enabled.
  - Install the jython library: Download [jython-standalone-2.7.0.jar](http://www.jython.org/downloads.html) and install it in the boot folder: `/usr/share/openhab2/runtime/lib/boot/`
- - Download [snakeyaml-1.18.jar](http://central.maven.org/maven2/org/yaml/snakeyaml/1.18/snakeyaml-1.18.jar) and install it in the addons folder: `/usr/share/openhab2/addons`.
+ - Download [snakeyaml-1.18.jar](http://central.maven.org/maven2/org/yaml/snakeyaml/1.18/snakeyaml-1.18.jar) and install it in the ~~addons~~boot folder: ~~`/usr/share/openhab2/addons`~~`/usr/share/openhab2/runtime/lib/boot/`.
 
  - Install the contents of the automation folder in this repo in your automation folder: `/etc/openhab2/automation`. Note: You don't need `000_log.py` if you already have some jython to openhab log bridge installed.
  - You may want to add `log4j.logger.jython.shutters = INFO` to your logging config.
