@@ -1,19 +1,18 @@
-
-# copied from https://raw.githubusercontent.com/steve-bate/openhab2-jython/5cf5b09d1f6d492358207fde5ad14f4e7a2689b9/lib/openhab/log.py
-# and slightly modified.
+# inspired by https://raw.githubusercontent.com/steve-bate/openhab2-jython/5cf5b09d1f6d492358207fde5ad14f4e7a2689b9/lib/openhab/log.py
+# 2017 Sept: changed to use Log4j2 instead of slf4j.
 
 # this script is not needed if you already use the library by Steve Bate: https://github.com/steve-bate/openhab2-jython/tree/master
 
 import logging
-from org.slf4j import Logger, LoggerFactory
+from org.apache.logging.log4j import Logger, LogManager
 
-class Slf4jHandler(logging.Handler):
+class Log4j2Handler(logging.Handler):
     def emit(self, record):
         message = self.format(record)
         logger_name = record.name
         if record.name == "root":
-            logger_name = Logger.ROOT_LOGGER_NAME
-        logger = LoggerFactory.getLogger(logger_name)
+            logger_name = LogManager.ROOT_LOGGER_NAME
+        logger = LogManager.getLogger(logger_name)
         level = record.levelno
         if level == logging.DEBUG:
             logger.debug(message)
@@ -21,11 +20,15 @@ class Slf4jHandler(logging.Handler):
             logger.info(message)
         elif level == logging.WARN:
             logger.warn(message)
-        elif level in [logging.ERROR, logging.CRITICAL] :
+        elif level == logging.ERROR:
             logger.error(message)
-            
+        elif level == logging.CRITICAL:
+            logger.fatal(message)
+        else:
+            logger.fatal("unknown logger level: " + str(level))
+
 def scriptLoaded(id):
-    handler = Slf4jHandler()
+    handler = Log4j2Handler()
     logging.root.setLevel(logging.DEBUG)
     logging.root.handlers = [handler]
 
