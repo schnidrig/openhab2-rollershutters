@@ -11,7 +11,8 @@ import time
 from threading import Thread
  
 # java imports
-from org.eclipse.smarthome.core.scheduler import CronExpression
+#from org.eclipse.smarthome.core.scheduler import CronExpression
+from org.quartz import CronExpression
 from java.util import Date, Locale
 from java.text import DateFormat
 from org.yaml.snakeyaml import Yaml
@@ -976,6 +977,7 @@ class MiscTest():
         dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.GERMAN)
         assert CronExpression("* * * ? * SAT,SUN *").isSatisfiedBy(dateFormat.parse("29.07.2017"))
         assert CronExpression("* * * ? * SAT,SUN *").isSatisfiedBy(dateFormat.parse("30.07.2017"))
+        assert CronExpression("* * * ? * SAT,SUN *").isSatisfiedBy(dateFormat.parse("03.09.2017"))
 
     def run(self):
         self.logger.info("TEST start")
