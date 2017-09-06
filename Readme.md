@@ -15,7 +15,8 @@ You need at least openhab 2.2.0 dated 20170729 or newer.
 
 ## Known Bugs
 
-- The script depends on: `org.eclipse.smarthome.core.scheduler.CronExpression` which still has bugs. E.g. `30.07.2017` does not match `* * * ? * SAT,SUN *`.
+- ~~The script depends on: `org.eclipse.smarthome.core.scheduler.CronExpression` which still has bugs. E.g. `30.07.2017` does not match `* * * ? * SAT,SUN *`.~~
+- Since the problems with o.e.s.c.scheduler do not seem to get fixed, I decided to replace it with quartz. It happened to be available in my environment. If it is not in yours you may have to add the jar file to your boot directory.
 - The script is still relatively new and needs more testing. -> Use at your own risk ;-)
 
 ## Config
@@ -38,7 +39,7 @@ The calendar specifies the daily schedule that is to be run on a particular day.
         cron: "? * 2-6 *"
         daily_schedule: workday
 
-It is possible to use time ranges or cron expressions ( without seconds, minutes, hours ). The cron expressions use the syntax from org.eclipse.smarthome.core.scheduler.CronExpression. (compatible with [Quarz](https://quartz-scheduler.org/), see [CronExpression](http://www.quartz-scheduler.org/api/2.2.1/org/quartz/CronExpression.html) )
+It is possible to use time ranges or cron expressions ( without seconds, minutes, hours ). The cron expressions use the syntax from ~~org.eclipse.smarthome.core.scheduler.CronExpression.~~ (compatible with [Quarz](https://quartz-scheduler.org/), see [CronExpression](http://www.quartz-scheduler.org/api/2.2.1/org/quartz/CronExpression.html) )
 
 The first match wins.
 
