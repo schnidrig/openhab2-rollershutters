@@ -167,6 +167,11 @@ This allows for modeling the window shading.
               - { azimuth: 280, elevation: 10}
             above:
               - { azimuth: 240, elevation: 3}
+          - azimuth: 280
+            below:
+              - { azimuth: 280, elevation: 60, angle: 35}
+            above:
+              - { azimuth: 240, elevation: 3}
           - azimuth: 330
       shutter_office:
         orientation: 150
@@ -195,6 +200,11 @@ This allows for modeling the window shading.
 
     - { azimuth: 240, elevation: 60}
     - { azimuth: 280, elevation: 30}
+    
+- Alternatively, a line may also be described by a point and an angle:
+
+
+    - { azimuth: 280, elevation: 60, angle: 35}
 
 
 - The last azimuth defines the end of the last section:

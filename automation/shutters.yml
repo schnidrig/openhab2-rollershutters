@@ -29,6 +29,20 @@ sun_exposure:
         above:
           - { azimuth: 240, elevation: 3}
       - azimuth: 330
+  shutter_bedroom:
+    orientation: 240
+    sun_openings:
+      - azimuth: 160
+        below:
+          - { azimuth: 240, elevation: 60}
+        above:
+          - { elevation: 5}
+      - azimuth: 240
+        below:
+          - { azimuth: 240, elevation: 60, angle: 35 }
+        above:
+          - { azimuth: 240, elevation: 3}
+      - azimuth: 330
   shutter_kitchen:
     orientation: 150
     sun_openings:
@@ -40,11 +54,6 @@ sun_exposure:
       - azimuth: 30
       - azimuth: 140
   shutter_kids:
-    orientation: 240
-    sun_openings:
-      - azimuth: 160
-      - azimuth: 330
-  shutter_bedroom:
     orientation: 240
     sun_openings:
       - azimuth: 160

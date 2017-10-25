@@ -246,20 +246,31 @@ class HLine():
         ) 
 
 #######################################################
+
+# tan e = tan e0 - tan g * tan a
+
+# tan g = (tan e1 - tan e2) / (tan a2 - tan a1)
+
 class Line(HLine):
     def __init__(self, orientation, config):
         self.logger = logging.getLogger(logger_name + ".Line")
         self.orientation = orientation
-        self.azimuth1 = config[0]['azimuth']
-        self.azimuth2 = config[1]['azimuth']
-        self.profileAngle1 = self._calculateProfileAngle(config[0]['elevation'], self.azimuth1)
-        self.profileAngle2 = self._calculateProfileAngle(config[1]['elevation'], self.azimuth2)
-        self.inclination = 1.0 * (self.profileAngle2 - self.profileAngle1) / (self.azimuth2 - self.azimuth1)
-        self.logger.debug(str(self.profileAngle1) + "/" + str(self.azimuth1) + "; " + str(self.profileAngle2) + "/" + str(self.azimuth2) + "; " + str(self.inclination))
+        a1 = math.radians(config[0]['azimuth']-self.orientation)
+        e1 = math.radians(self._calculateProfileAngle(config[0]['elevation'], config[0]['azimuth']))
+        angle = config[0].get('angle')
+        if (angle != None):
+            self.tan_gamma = math.tan(math.radians(angle))
+        else:
+            a2 = math.radians(config[1]['azimuth']-self.orientation)
+            e2 = math.radians(self._calculateProfileAngle(config[1]['elevation'], config[1]['azimuth']))
+            self.tan_gamma = (math.tan(e1) - math.tan(e2)) / (math.tan(a2) - math.tan(a1))
+        self.tan_e0 =  math.tan(e1) + self.tan_gamma * math.tan(a1)                                                 
+        self.logger.debug("Gamma: " + str(math.degrees(math.atan(self.tan_gamma))) + "; E0:" + str(math.degrees(math.atan(self.tan_e0))))
+        self.logger.debug(str(self.tan_gamma) + "/" + str(self.tan_e0))
 
     def getElevationAtAzimuth(self, azimuth):
-        return self._getElevationAtAzimuth(azimuth, max(min((azimuth - self.azimuth1) * self.inclination + self.profileAngle1, 90),0))
-
+        e = math.atan(self.tan_e0 - self.tan_gamma * math.tan(math.radians(azimuth-self.orientation)))
+        return self._getElevationAtAzimuth(azimuth, math.degrees(e))
 
 #######################################################
 class SunExposure():
@@ -356,25 +367,54 @@ class ShutterTest():
         assert round(t5) == 52
         assert round(t6) == 63
 
-        
+
+    
     def lineTest(self):
         self.logger.info("lineTest")
+        line1 = Line(60, Yaml().load("""
+             - { azimuth: 120, elevation: 35.82 }
+             - { azimuth: 110, elevation: 49 }
+             """))
         line = Line(240, Yaml().load("""
-             - { azimuth: 224, elevation: 57 }
+             - { azimuth: 197.28, elevation: 39.54 }
              - { azimuth: 227, elevation: 59 }
              """))
+        line3 = Line(240, Yaml().load("""
+             - { azimuth: 197.28, elevation: 39.54 }
+             - { azimuth: 199.52, elevation: 41.56 }
+             """))
+        line4 = Line(240, Yaml().load("""
+             - { azimuth: 197.28, elevation: 39.54, angle: -35 }
+             """))
 
-        t1 = line.getElevationAtAzimuth(240)
-        self.logger.debug(t1)
-        assert round(t1) == 67
-        assert round(line.getElevationAtAzimuth(224)) == 57
+        # gäste
+        line5 = Line(240, Yaml().load("""
+             - { azimuth: 174.88, elevation: 30.3 }
+             - { azimuth: 189.58, elevation: 53.66 }
+             """))
+        self.logger.debug(line.getElevationAtAzimuth(240))
+        self.logger.debug(line.getElevationAtAzimuth(224))
+        self.logger.debug(line.getElevationAtAzimuth(227))
+        self.logger.debug(line.getElevationAtAzimuth(200))
+        self.logger.debug(line.getElevationAtAzimuth(199.52))
+        self.logger.debug(line.getElevationAtAzimuth(180))
+        self.logger.debug(line.getElevationAtAzimuth(170))
+        self.logger.debug(line.getElevationAtAzimuth(160))
+        self.logger.debug(line.getElevationAtAzimuth(150))
+        self.logger.debug(line.getElevationAtAzimuth(290))
+        self.logger.debug(line.getElevationAtAzimuth(300))
+        self.logger.debug(line.getElevationAtAzimuth(310))
+        self.logger.debug(line.getElevationAtAzimuth(320))
+        self.logger.debug(line.getElevationAtAzimuth(330))
+        self.logger.debug(line.getElevationAtAzimuth(175))
+        self.logger.debug(line5.getElevationAtAzimuth(181.68))
+
+        assert round(line.getElevationAtAzimuth(240)) == 62
+        assert round(line.getElevationAtAzimuth(224)) == 58
         assert round(line.getElevationAtAzimuth(227)) == 59
-        t2 = round(line.getElevationAtAzimuth(280))
-        self.logger.debug(t2)
-        assert t2 > 64 and t2 < 90
-        assert round(line.getElevationAtAzimuth(290)) == 90
-        assert round(line.getElevationAtAzimuth(160)) > 0
-        assert round(line.getElevationAtAzimuth(60)) == 0
+        assert round(line.getElevationAtAzimuth(199.52)) == 42
+        
+        assert round(line.getElevationAtAzimuth(174)) == 0
 
     def sunExposureTest(self):
         self.logger.info("sunExposureTest")
@@ -1033,10 +1073,10 @@ def addAllRules():
     calendar.loadTodaysRules()
 
 def runTests():
-        MiscTest().run()
+        #MiscTest().run()
         ShutterTest().run()
-        RulesTest().run()
-        CalendarTest().run()
+        #RulesTest().run()
+        #CalendarTest().run()
         pass
  
 def load():
