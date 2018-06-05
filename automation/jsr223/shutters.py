@@ -480,7 +480,7 @@ class ShutterBaseRule(SimpleRule):
         self.shutterAutomationItem = shutterAutomationItem
 
     def sendCommand(self, shutterName, state, auto):
-        if not (auto or forced):
+        if not (auto or self.forced):
             self.logger.info("Auto(OFF): Not sending command: " + shutterName + "=" + state)
         else:
             self.logger.info("Auto(ON): sending command: " + shutterName + "=" + state)
