@@ -472,14 +472,15 @@ class ShutterTest():
 # Rules
 
 class ShutterBaseRule(SimpleRule):
-    def __init__(self, shutterAutomationItem, testing=False):
+    def __init__(self, shutterAutomationItem, testing=False, forced=False):
         self.testing = testing
+        self.forced = forced
         if ir.get(shutterAutomationItem) == None:
             self.logger.error("Item: " + shutterAutomationItem + " not found.")
         self.shutterAutomationItem = shutterAutomationItem
 
     def sendCommand(self, shutterName, state, auto):
-        if not auto:
+        if not (auto or forced):
             self.logger.info("Auto(OFF): Not sending command: " + shutterName + "=" + state)
         else:
             self.logger.info("Auto(ON): sending command: " + shutterName + "=" + state)
@@ -492,10 +493,10 @@ class ShutterBaseRule(SimpleRule):
 # Sun Exposure Rule
 
 class SunExposureRule(ShutterBaseRule):
-    def __init__(self, exposure, azimuthItem, elevationItem, isSunnyItem, shutterAutomationItem, testing=False):
+    def __init__(self, exposure, azimuthItem, elevationItem, isSunnyItem, shutterAutomationItem, testing=False, forced=False):
         #super(ShutterBaseRule, self).__init__(shutterAutomationItem, testing)
         self.logger = logging.getLogger(logger_name + ".SunExposureRule")
-        ShutterBaseRule.__init__(self, shutterAutomationItem, testing)
+        ShutterBaseRule.__init__(self, shutterAutomationItem, testing, forced)
         self.exposure = exposure
         if ir.get(elevationItem) == None:
             self.logger.error("Item: " + elevationItem + " not found.")
@@ -558,8 +559,8 @@ def setupSunExposureRule(exposureConfig, items):
 # Shutter Rule
 
 class ShutterScheduleRule(ShutterBaseRule):
-    def __init__(self, action, items, ruleName, shutterAutomationItem, description = "", testing=False):
-        ShutterBaseRule.__init__(self, shutterAutomationItem, testing)
+    def __init__(self, action, items, ruleName, shutterAutomationItem, description = "", testing=False, forced=False):
+        ShutterBaseRule.__init__(self, shutterAutomationItem, testing, forced)
         self.logger = logging.getLogger(logger_name + ".ShutterScheduleRule")
         self.action = action
         self.items = items
@@ -810,8 +811,11 @@ class Rules():
 
     def parseRules(self):
         for rule_name in self.config:
-            self.logger.info("Parser: found rule: " + rule_name)
             config = self.config[rule_name]
+            forced = config.get('forced')
+            if forced == None:
+                forced = False
+            self.logger.info("Parser: found rule: " + rule_name + ("(forced)" if forced else ""))
             trigger_configs = config['triggers']
             condition_configs = config.get('conditions')
             if condition_configs == None:
@@ -823,7 +827,8 @@ class Rules():
                                        actionItems,
                                        rule_name,
                                        self.items['shutter_automation'],
-                                       config['desc']
+                                       config['desc'],
+                                       forced
                                        );
             for triggerConfig in trigger_configs:
                 self.logger.debug("Trigger_Config: " + str(triggerConfig))
