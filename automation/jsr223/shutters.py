@@ -483,7 +483,10 @@ class ShutterBaseRule(SimpleRule):
         if not (auto or self.forced):
             self.logger.info("Auto(OFF): Not sending command: " + shutterName + "=" + state)
         else:
-            self.logger.info("Auto(ON): sending command: " + shutterName + "=" + state)
+            if self.forced:
+                self.logger.info("Auto(forced): sending command: " + shutterName + "=" + state)
+            else:
+                self.logger.info("Auto(ON): sending command: " + shutterName + "=" + state)
             if self.testing:
                 events.sendCommand(shutterName, state if state != "STOP" else "50")
             else:
@@ -828,7 +831,7 @@ class Rules():
                                        rule_name,
                                        self.items['shutter_automation'],
                                        config['desc'],
-                                       forced
+                                       forced=forced
                                        );
             for triggerConfig in trigger_configs:
                 self.logger.debug("Trigger_Config: " + str(triggerConfig))
