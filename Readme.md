@@ -1,12 +1,7 @@
 # Rollershutter Automation Script
 
-
-__This is for Openhab 2.2 and 2.3.__
-
-__Note: This branch is no longer maintained.__
-
 This is a script written for Openhab2. It is written in Jython and depends on the new jsr223 scripting feature. See [jsr223](http://docs.openhab.org/configuration/jsr223.html) for more information.
-You need at least openhab 2.2.0 dated 20170729 or newer.
+You need at least openhab 2.4 or newer.
 
 ## Features
 
@@ -21,8 +16,7 @@ You need at least openhab 2.2.0 dated 20170729 or newer.
 ## Known Bugs
 
 - ~~The script depends on: `org.eclipse.smarthome.core.scheduler.CronExpression` which still has bugs. E.g. `30.07.2017` does not match `* * * ? * SAT,SUN *`.~~
-- Since the problems with o.e.s.c.scheduler do not seem to get fixed, I decided to replace it with quartz. It happened to be available in my environment. If it is not in yours you may have to add the jar file to your boot directory.
-- The script is still relatively new and needs more testing. -> Use at your own risk ;-)
+- Since the problems with o.e.s.c.scheduler do not seem to get fixed, I decided to replace it at least for the time being with quartz. It happened to be available in my environment. I think it was downloaded to the cache by the astro binding, but I'm not really sure. So, if it is not available in your  environment, you may have to add the jar file to your boot directory.
 
 ## Config
 

@@ -1,5 +1,8 @@
+# Copyright (c) 2017-2018 by Christian Schnidrig.
 
-# Copyright (c) 2017 by Christian Schnidrig.
+# see also:
+# https://github.com/eclipse/smarthome/tree/master/bundles/automation/org.eclipse.smarthome.automation.module.script.rulesupport/src/main/java/org/eclipse/smarthome/automation/module/script/rulesupport
+# https://github.com/eclipse/smarthome/tree/master/bundles/automation/org.eclipse.smarthome.automation.module.core/src/main/java/org/eclipse/smarthome/automation/module/core/handler
 
 # jython imports
 import logging
@@ -126,62 +129,70 @@ def normalize_name(name, prefix=None):
 #######################################################
 #######################################################
 #######################################################
+# Condition
+
+def itemStateCondition(itemName, operator, state, conditionName=None):
+    logger = logging.getLogger(logger_name + ".ItemStateCondition")
+    conditionName = normalize_name(conditionName)
+    logger.info("Condition: " + conditionName)
+    result = ConditionBuilder.create()\
+        .withId(conditionName)\
+        .withLabel(conditionName)\
+        .withTypeUID("core.ItemStateCondition")\
+        .withConfiguration(Configuration({
+        "itemName": itemName,
+        "operator": operator,
+        "state": state
+        }))\
+        .build()
+    logger.debug(result.toString())
+    return result
+
+#######################################################
+#######################################################
+#######################################################
 # Triggers
 
-class CronTrigger(Trigger):
-    def __init__(self, cronExpression, triggerName=None):
-        self.logger = logging.getLogger(logger_name + ".CronTrigger")
-        triggerName = normalize_name(triggerName)
-        Trigger.__init__(self, triggerName, "timer.GenericCronTrigger", Configuration({
-                "cronExpression": cronExpression
-                }))
-        self.setLabel(triggerName)
+def cronTrigger(cronExpression, triggerName=None):
+    logger = logging.getLogger(logger_name + ".CronTrigger")
+    triggerName = normalize_name(triggerName)
+    return TriggerBuilder.create()\
+        .withId(triggerName)\
+        .withLabel(triggerName)\
+        .withTypeUID("timer.GenericCronTrigger")\
+        .withConfiguration(Configuration({"cronExpression": cronExpression}))\
+        .build()
 
-class ItemStateCondition(Condition):
-    def __init__(self, itemName, operator, state, conditionName=None):
-        self.logger = logging.getLogger(logger_name + ".ItemStateCondition")
-        conditionName = normalize_name(conditionName)
-        self.logger.info("Condition: " + conditionName)
-        Condition.__init__(self, conditionName, "core.ItemStateCondition", Configuration({
-            "itemName": itemName,
-            "operator": operator,
-            "state": state
-        }), {})
-        self.setLabel(conditionName)
+def channelEventTrigger(channelUID, event, triggerName=None):
+    logger = logging.getLogger(logger_name + ".ChannelEventTrigger")
+    triggerName = normalize_name(triggerName)
+    logger.debug("Trigger: " + triggerName + "; channel: " + channelUID)
+    config = { "channelUID": channelUID }
+    config["event"] = event
+    return TriggerBuilder.create()\
+        .withId(triggerName)\
+        .withLabel(triggerName)\
+        .withTypeUID("core.ChannelEventTrigger")\
+        .withConfiguration(Configuration(config))\
+        .build()
 
-class ChannelEventTrigger(Trigger):
-    def __init__(self, channelUID, event, triggerName=None):
-        self.logger = logging.getLogger(logger_name + ".ChannelEventTrigger")
-        triggerName = normalize_name(triggerName)
-        self.logger.debug("Trigger: " + triggerName + "; channel: " + channelUID)
-        config = { "channelUID": channelUID }
-        config["event"] = event
-        Trigger.__init__(self, triggerName, "core.ChannelEventTrigger", Configuration(config))
-        self.setLabel(triggerName)
-
-class StartupTrigger(Trigger):
-    def __init__(self, triggerName=None):
-        self.logger = logging.getLogger(logger_name + ".StartupTrigger")
-        triggerName = normalize_name(triggerName)
-        Trigger.__init__(self, triggerName, STARTUP_MODULE_ID, Configuration())
-        self.setLabel(triggerName)
-
-class ItemStateChangeTrigger(Trigger):
-    def __init__(self, itemName, state=None, triggerName=None):
-        self.logger = logging.getLogger(logger_name + ".ItemStateChangeTrigger")
-        triggerName = normalize_name(triggerName)
-        config = { "itemName": itemName }
-        if state is not None:
-            config["state"] = state
-        Trigger.__init__(self, triggerName, "core.ItemStateChangeTrigger", Configuration(config))
-        self.setLabel(triggerName)
-
+def itemStateChangeTrigger(itemName, state=None, triggerName=None):
+    logger = logging.getLogger(logger_name + ".ItemStateChangeTrigger")
+    triggerName = normalize_name(triggerName)
+    config = { "itemName": itemName }
+    if state is not None:
+        config["state"] = state
+    return TriggerBuilder.create()\
+        .withId(triggerName)\
+        .withLabel(triggerName)\
+        .withTypeUID("core.ItemStateUpdateTrigger")\
+        .withConfiguration(Configuration(config))\
+        .build()
 
 #######################################################
 #######################################################
 #######################################################
 # Shutters
-
 
 #######################################################
 class Horizon():
@@ -323,8 +334,6 @@ class SunExposure():
             self.logger.debug ("below: " + str(elevation) + "<" + str(e2) )
             sunlit = sunlit and (float(str(elevation)) < e2)
         return sunlit
-
-
 
 #######################################################
 # tests
@@ -471,7 +480,15 @@ class ShutterTest():
 #######################################################
 # Rules
 
-class ShutterBaseRule(SimpleRule):
+#######################################################
+class JythonSimpleRule(SimpleRule):
+    def execute(self, module, input):
+        try:
+            self._execute(module, input)
+        except:
+            logger.error(traceback.format_exc())
+
+class ShutterBaseRule(JythonSimpleRule):
     def __init__(self, shutterAutomationItem, testing=False, forced=False):
         self.testing = testing
         self.forced = forced
@@ -507,11 +524,11 @@ class SunExposureRule(ShutterBaseRule):
         if ir.get(isSunnyItem) == None:
             self.logger.error("Item: " + isSunnyItem + " not found.")
         self.isSunnyItem = isSunnyItem
-        self.setTriggers([ItemStateChangeTrigger(azimuthItem)])
+        self.setTriggers([itemStateChangeTrigger(azimuthItem)])
         self.setName(module_name + ":SunExposureRule")
         self.setDescription("Calculates if a rollershutter is exposed to sunlight.")
 
-    def _execute(self, azimuth, elevation, auto):
+    def run(self, azimuth, elevation, auto):
         isSunny = ir.get(self.isSunnyItem).getState().toString() == "ON"
         self.logger.info("azimuth: " + str(azimuth) + "; elevation: " + str(elevation) + "; isSunny: " + str(isSunny))
 
@@ -540,13 +557,14 @@ class SunExposureRule(ShutterBaseRule):
             else:
                 self.logger.info(shutterName + " is: " + str(shutterAutoState))
 
-    def execute(self, module, input):
+    def _execute(self, module, input):
         self.logger.debug("Executing Exposure Rule: ")
-        azimuth = float(str(input['newState']))
+        self.logger.debug(input)
+        azimuth = float(str(input['state']))
         elevation = float(ir.get(self.elevationItem).getState().toString())
         auto = ir.get(self.shutterAutomationItem).getState().toString() == "ON"
         self.logger.debug("shutter_automation is: " + str(auto))
-        self._execute(azimuth, elevation, auto)
+        self.run(azimuth, elevation, auto)
 
 
 def setupSunExposureRule(exposureConfig, items):
@@ -556,7 +574,6 @@ def setupSunExposureRule(exposureConfig, items):
     for shutter in exposureConfig:
         exposure[shutter] = SunExposure(exposureConfig[shutter])
     globalRules.append(SunExposureRule(exposure, items['azimuth'], items['elevation'], items['weather_sunny'], items['shutter_automation']))
-
 
 #######################################################
 # Shutter Rule
@@ -577,22 +594,22 @@ class ShutterScheduleRule(ShutterBaseRule):
     def addCronTrigger(self, schedule):
         name = self.ruleName + "-cron:" + str(schedule).replace("*", "s").replace("?", "q").replace(" ", "l").replace("/", "x")
         triggerName = name + "_trigger"
-        self.triggerList.append(CronTrigger(schedule + " ? * * *", triggerName))
+        self.triggerList.append(cronTrigger(schedule + " ? * * *", triggerName))
         self.setTriggers(self.triggerList)
 
     def addChannelEventTrigger(self, channelUID, event):
         name = self.ruleName + "-" + channelUID + "-" + event
         triggerName = name + "_trigger"
         conditionName = name + "_condition"
-        self.triggerList.append(ChannelEventTrigger(channelUID, event, triggerName))
+        self.triggerList.append(channelEventTrigger(channelUID, event, triggerName))
         self.setTriggers(self.triggerList) 
  
     def addItemStateCondition(self, config):
         conditionName = self.ruleName + "-" + config['item_name'] + "_"  + config['state']
-        self.conditionList.append(ItemStateCondition(config['item_name'], config['operator'], config['state'], conditionName))
+        self.conditionList.append(itemStateCondition(config['item_name'], config['operator'], config['state'], conditionName))
         self.setConditions(self.conditionList)
 
-    def _execute(self, auto):
+    def run(self, auto):
         for shutterName in self.items:
             autoState = ir.get(prefix_auto + shutterName).getState().toString()
             if self.action == autoStateUp:
@@ -610,11 +627,11 @@ class ShutterScheduleRule(ShutterBaseRule):
 
             events.postUpdate(prefix_auto + shutterName, self.action)
 
-    def execute(self, module, input):
+    def _execute(self, module, input):
         self.logger.info("Executing Rule: " + self.ruleName + "; action: " + self.action + "; items: " + str(self.items))
         auto = ir.get(self.shutterAutomationItem).getState().toString() == "ON"
         self.logger.debug("shutter_automation is: " + str(auto))
-        self._execute(auto)
+        self.run(auto)
 
 #######################################################
 # tests
@@ -936,14 +953,14 @@ class Calendar():
 
 
 #######################################################
-class DailyReloadRule(SimpleRule):
+class DailyReloadRule(JythonSimpleRule):
     def __init__(self):
-        self.triggers = [CronTrigger("0 10 0 ? * * *", "reloadAtMidnight")]
+        self.triggers = [cronTrigger("0 10 0 ? * * *", "reloadAtMidnight")]
         self.setName(module_name + ":DailyReloadRule")
         self.setDescription("Determines each day, which daily schedule to run.")
 
 
-    def execute(self, module, input):
+    def _execute(self, module, input):
         automationManager.removeAll()
         addAllRules()
 
@@ -1125,7 +1142,7 @@ def scriptLoaded(id):
         #events.postUpdate("shutter_automation", "ON")
         #initStateItems(True, {prefix_auto: autoStateSun, prefix_sunlit: sunlitStateFalse})
 
-    except Exception as e:
+    except:
         logger.error(traceback.format_exc())
 
 def scriptUnloaded():
