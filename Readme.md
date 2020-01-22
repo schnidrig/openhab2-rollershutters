@@ -1,7 +1,7 @@
 # Rollershutter Automation Script
 
 This is a script written for Openhab2. It is written in Jython and depends on the new jsr223 scripting feature. See [jsr223](http://docs.openhab.org/configuration/jsr223.html) for more information.
-You need at least openhab 2.4 or newer.
+You need openhab 2.5 or newer.
 
 ## Features
 

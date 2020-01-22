@@ -5,7 +5,7 @@
 # https://github.com/eclipse/smarthome/tree/master/bundles/automation/org.eclipse.smarthome.automation.module.core/src/main/java/org/eclipse/smarthome/automation/module/core/handler
 
 # jython imports
-import logging
+from org.slf4j import LoggerFactory
 import uuid
 import math
 import sys
@@ -66,7 +66,7 @@ config = None
 calendar = None
 
 # default logger
-logger = logging.getLogger(logger_name)
+logger = LoggerFactory.getLogger(logger_name)
 
 # globalRules
 globalRules = None
@@ -77,7 +77,7 @@ globalRules = None
 # config
 class Config():
     def __init__(self):
-        self.logger = logging.getLogger(logger_name + ".Config")
+        self.logger = LoggerFactory.getLogger(logger_name + ".Config")
         self.shutterConfig = Yaml().load(open(shuttersFile))
         self.scheduleConfig = Yaml().load(open(scheduleFile))
         self.logger.info("Config loaded")
@@ -102,7 +102,7 @@ class Config():
 
 #######################################################
 def initStateItems(force=False, states=None):
-    logger = logging.getLogger(logger_name + ".initStateItems")
+    logger = LoggerFactory.getLogger(logger_name + ".initStateItems")
     logger.info("Initializing")
     if states == None:
         states = {prefix_auto: autoStateDown, prefix_sunlit: sunlitStateFalse}
@@ -132,7 +132,7 @@ def normalize_name(name, prefix=None):
 # Condition
 
 def itemStateCondition(itemName, operator, state, conditionName=None):
-    logger = logging.getLogger(logger_name + ".ItemStateCondition")
+    logger = LoggerFactory.getLogger(logger_name + ".ItemStateCondition")
     conditionName = normalize_name(conditionName)
     logger.info("Condition: " + conditionName)
     result = ConditionBuilder.create()\
@@ -154,7 +154,7 @@ def itemStateCondition(itemName, operator, state, conditionName=None):
 # Triggers
 
 def cronTrigger(cronExpression, triggerName=None):
-    logger = logging.getLogger(logger_name + ".CronTrigger")
+    logger = LoggerFactory.getLogger(logger_name + ".CronTrigger")
     triggerName = normalize_name(triggerName)
     return TriggerBuilder.create()\
         .withId(triggerName)\
@@ -164,7 +164,7 @@ def cronTrigger(cronExpression, triggerName=None):
         .build()
 
 def channelEventTrigger(channelUID, event, triggerName=None):
-    logger = logging.getLogger(logger_name + ".ChannelEventTrigger")
+    logger = LoggerFactory.getLogger(logger_name + ".ChannelEventTrigger")
     triggerName = normalize_name(triggerName)
     logger.debug("Trigger: " + triggerName + "; channel: " + channelUID)
     config = { "channelUID": channelUID }
@@ -177,7 +177,7 @@ def channelEventTrigger(channelUID, event, triggerName=None):
         .build()
 
 def itemStateChangeTrigger(itemName, state=None, triggerName=None):
-    logger = logging.getLogger(logger_name + ".ItemStateChangeTrigger")
+    logger = LoggerFactory.getLogger(logger_name + ".ItemStateChangeTrigger")
     triggerName = normalize_name(triggerName)
     config = { "itemName": itemName }
     if state is not None:
@@ -197,7 +197,7 @@ def itemStateChangeTrigger(itemName, state=None, triggerName=None):
 #######################################################
 class Horizon():
     def __init__(self, orientation, config):
-        self.logger = logging.getLogger(logger_name + ".Horizon")
+        self.logger = LoggerFactory.getLogger(logger_name + ".Horizon")
         self.elevation = config['elevation']
     def getElevationAtAzimuth(self, azimuth):
         return self.elevation
@@ -229,7 +229,7 @@ class Horizon():
 
 class HLine():
     def __init__(self, orientation, config):
-        self.logger = logging.getLogger(logger_name + ".HLine")
+        self.logger = LoggerFactory.getLogger(logger_name + ".HLine")
         self.orientation = orientation
         self.profileAngle = self._calculateProfileAngle(config['elevation'], config['azimuth'])
         self.logger.debug("profileAngle: " + str(self.profileAngle) + "/*")
@@ -264,7 +264,7 @@ class HLine():
 
 class Line(HLine):
     def __init__(self, orientation, config):
-        self.logger = logging.getLogger(logger_name + ".Line")
+        self.logger = LoggerFactory.getLogger(logger_name + ".Line")
         self.orientation = orientation
         a1 = math.radians(config[0]['azimuth']-self.orientation)
         e1 = math.radians(self._calculateProfileAngle(config[0]['elevation'], config[0]['azimuth']))
@@ -286,7 +286,7 @@ class Line(HLine):
 #######################################################
 class SunExposure():
     def __init__(self, config):
-        self.logger = logging.getLogger(logger_name + ".SunExposure")
+        self.logger = LoggerFactory.getLogger(logger_name + ".SunExposure")
         self.config = config
         self.openings = {}
         self.orientation = config['orientation']
@@ -310,8 +310,8 @@ class SunExposure():
     def isSunlit(self, azimuth, elevation):
         self.logger.debug(str(azimuth) + "-" + str(elevation))
         sections = sorted(list(self.openings))
-        self.logger.debug(self.config)
-        self.logger.debug(sections)
+        self.logger.debug(str(self.config))
+        self.logger.debug(str(sections))
         section = None
         for i in sections:
             self.logger.debug("i: " + str(i) + "; " + str(azimuth))
@@ -319,7 +319,7 @@ class SunExposure():
                 break
             else:
                 section = i
-        self.logger.debug(section)
+        self.logger.debug(str(section))
         if section == sections[len(sections)-1]:
             return False
         if section == None:
@@ -339,7 +339,7 @@ class SunExposure():
 # tests
 class ShutterTest():
     def __init__(self):
-        self.logger = logging.getLogger(logger_name + ".ShutterTest")
+        self.logger = LoggerFactory.getLogger(logger_name + ".ShutterTest")
 
     def horizonTest(self):
         self.logger.info("horizonTest")
@@ -515,7 +515,7 @@ class ShutterBaseRule(JythonSimpleRule):
 class SunExposureRule(ShutterBaseRule):
     def __init__(self, exposure, azimuthItem, elevationItem, isSunnyItem, shutterAutomationItem, testing=False, forced=False):
         #super(ShutterBaseRule, self).__init__(shutterAutomationItem, testing)
-        self.logger = logging.getLogger(logger_name + ".SunExposureRule")
+        self.logger = LoggerFactory.getLogger(logger_name + ".SunExposureRule")
         ShutterBaseRule.__init__(self, shutterAutomationItem, testing, forced)
         self.exposure = exposure
         if ir.get(elevationItem) == None:
@@ -559,7 +559,7 @@ class SunExposureRule(ShutterBaseRule):
 
     def _execute(self, module, input):
         self.logger.debug("Executing Exposure Rule: ")
-        self.logger.debug(input)
+        self.logger.debug(str(input))
         azimuth = float(str(input['state']))
         elevation = float(ir.get(self.elevationItem).getState().toString())
         auto = ir.get(self.shutterAutomationItem).getState().toString() == "ON"
@@ -568,7 +568,7 @@ class SunExposureRule(ShutterBaseRule):
 
 
 def setupSunExposureRule(exposureConfig, items):
-    logger = logging.getLogger(logger_name + ".setupSunExposureRule")
+    logger = LoggerFactory.getLogger(logger_name + ".setupSunExposureRule")
     logger.info("creating rule")
     exposure = {}
     for shutter in exposureConfig:
@@ -581,7 +581,7 @@ def setupSunExposureRule(exposureConfig, items):
 class ShutterScheduleRule(ShutterBaseRule):
     def __init__(self, action, items, ruleName, shutterAutomationItem, description = "", testing=False, forced=False):
         ShutterBaseRule.__init__(self, shutterAutomationItem, testing, forced)
-        self.logger = logging.getLogger(logger_name + ".ShutterScheduleRule")
+        self.logger = LoggerFactory.getLogger(logger_name + ".ShutterScheduleRule")
         self.action = action
         self.items = items
         self.triggerList = []
@@ -637,7 +637,7 @@ class ShutterScheduleRule(ShutterBaseRule):
 # tests
 class RulesTest():
     def __init__(self):
-        self.logger = logging.getLogger(logger_name + ".RulesTest")
+        self.logger = LoggerFactory.getLogger(logger_name + ".RulesTest")
 
     def sunExposureRuleTest(self):
         testExposureConfig = Yaml().load("""
@@ -820,7 +820,7 @@ class RulesTest():
 
 class Rules():
     def __init__(self, config, items):
-        self.logger = logging.getLogger(logger_name + ".Rules")
+        self.logger = LoggerFactory.getLogger(logger_name + ".Rules")
         self.config = config
         self.items = items
         self.rules = {}
@@ -875,7 +875,7 @@ class Rules():
 
 class DailySchedules():
     def __init__(self, config, rules):
-        self.logger = logging.getLogger(logger_name + ".DailySchedules")
+        self.logger = LoggerFactory.getLogger(logger_name + ".DailySchedules")
         self.config = config
         self.rules = rules
         self.schedules = {}
@@ -898,7 +898,7 @@ class DailySchedules():
 
 class Calendar():
     def __init__(self, config, schedules):
-        self.logger = logging.getLogger(logger_name + ".Calendar")
+        self.logger = LoggerFactory.getLogger(logger_name + ".Calendar")
         self.config = config
         self.schedules = schedules
 
@@ -917,7 +917,7 @@ class Calendar():
             if calendarItem.get('cron') != None:
                 cronExpression = "* * * " + calendarItem.get('cron')
                 self.logger.debug(cronExpression)
-                self.logger.debug(now)
+                self.logger.debug(str(now))
                 if CronExpression(cronExpression).isSatisfiedBy(now):
                     # don't break we want to test the config
                     if self.scheduleName == None:
@@ -927,10 +927,10 @@ class Calendar():
                 fromDate = df.parse(calendarItem['timerange']['from'])
                 toDate = df.parse(calendarItem['timerange']['to'])
                 self.logger.debug(calendarItem['timerange']['from'])
-                self.logger.debug(fromDate)
+                self.logger.debug(str(fromDate))
                 self.logger.debug(calendarItem['timerange']['to'])
-                self.logger.debug(toDate)
-                self.logger.debug(now)
+                self.logger.debug(str(toDate))
+                self.logger.debug(str(now))
                 if now.before(toDate) and now.after(fromDate):
                     # don't break we want to test the config
                     if self.scheduleName == None:
@@ -967,7 +967,7 @@ class DailyReloadRule(JythonSimpleRule):
 #######################################################
 class CalendarTest():
     def __init__(self):
-        self.logger = logging.getLogger(logger_name + ".CalendarTest")
+        self.logger = LoggerFactory.getLogger(logger_name + ".CalendarTest")
 
     def calendarTest(self, schedules):
         self.logger.info("calendarTest")
@@ -1034,7 +1034,7 @@ class CalendarTest():
 # tests
 class MiscTest():
     def __init__(self):
-        self.logger = logging.getLogger(logger_name + ".MiscTest")
+        self.logger = LoggerFactory.getLogger(logger_name + ".MiscTest")
 
     # Test for bug in CronExpression
     def cronTest(self):
@@ -1063,7 +1063,7 @@ configFileWatcher = FileSystems.getDefault().newWatchService()
 configFileWatcherKey = automationDirPath.register(configFileWatcher, StandardWatchEventKinds.ENTRY_MODIFY);
 
 def fileWatcher():
-    logger = logging.getLogger(logger_name + ".fileWatcher")
+    logger = LoggerFactory.getLogger(logger_name + ".fileWatcher")
     logger.info("Start watching config files")
     try:
         while True:
@@ -1142,6 +1142,7 @@ def scriptLoaded(id):
         #events.postUpdate("shutter_automation", "ON")
         #initStateItems(True, {prefix_auto: autoStateSun, prefix_sunlit: sunlitStateFalse})
 
+    #except Exception as e:
     except:
         logger.error(traceback.format_exc())
 
